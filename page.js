@@ -7,8 +7,8 @@ function getNowTime() {
 }
 
 var TYPE_ADD = 'ADD';
-var ADD_ROUND = 1;
-var MAX_ROUND = 5;
+var ADD_ROUND = 30;
+var MAX_ROUND = 100;
 var lastOperateTime = getNowTime();
 var lastAddTime = getNowTime();
 
