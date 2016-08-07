@@ -7,7 +7,7 @@ var INIT_WEIGHT = 'initweight';
 var ADD_WEIGHT = 'addweight';
 var TYPE_GET = 'GET';
 var TYPE_SET = 'SET';
-var PARAM = 'param';
+var TYPE_ADD = 'ADD';
 
 var urlInfo = [];
 var param = {
@@ -25,7 +25,6 @@ function initParams() {
         chrome.storage.local.get(name,function (value) {
             if(!!value[name]){
                 param[name] = value[name];
-                console.log(param);
             }
         });
     }
@@ -52,8 +51,9 @@ function getUrl(url) {
 function addClick(url) {
     url = getUrl(url);
     var info = urlInfo[url];
-    if(!!info && !!info.click)urlInfo[url].click = info.click + 1;
-    else urlInfo[url] = {click:1};
+    if(!!info && !!info.click)urlInfo[url].click = info.click + param[ADD_WEIGHT];
+    else urlInfo[url] = {click:param[INIT_WEIGHT]};
+    console.log(url+' change weight to '+urlInfo[url].click);
 }
 
 function cmpstr(a,b) {
@@ -69,7 +69,6 @@ function cmpstr(a,b) {
 }
 
 function updateAll(tabs) {
-    console.log(param);
     var arrs = [];
     var domainScore = [];
     for(var i in tabs){
@@ -101,7 +100,6 @@ function updateAll(tabs) {
         if(a.domainClick == b.domainClick)return cmpstr(a.domain,b.domain);
         return b.domainClick - a.domainClick;
     });
-    console.log(arrs);
     for(var i = 0;i < arrs.length;i++){
         var tab = arrs[i];
         if(tab.oldIndex != i){
@@ -112,6 +110,8 @@ function updateAll(tabs) {
     }
 
 }
+
+
 
 function mainLoop() {
     for(var url in urlInfo){
@@ -134,53 +134,61 @@ function mainLoop() {
     setTimeout(function () {
         chrome.windows.getCurrent({populate:true},function (window) {
             updateAll(window.tabs);
-            console.log("###")
-            console.log(window.tabs);
-            console.log(urlInfo);
-            console.log("###")
+            // console.log("###")
+            // console.log(window.tabs);
+            // console.log(urlInfo);
+            // console.log("###")
         });
     },1000);
 
     setTimeout(mainLoop,param[ROUND]*1000);
 }
 
-mainLoop();
 
-chrome.tabs.onCreated.addListener(function(tab){
+function startListeners() {
+    chrome.tabs.onCreated.addListener(function(tab){
 
-});
-
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-    console.log('Tab '+tabId+' has been changed with these options:');
-    if(!!changeInfo.url){
-        addClick(changeInfo.url);
-    }
-
-});
-
-chrome.tabs.onMoved.addListener(function(tabId, moveInfo){
-    console.log(moveInfo);
-});
-
-chrome.tabs.onActivated.addListener(function(activeInfo){
-    console.log('Tab '+activeInfo.tabId+' in window '+activeInfo.windowId+' is active now.');
-    chrome.tabs.get(activeInfo.tabId,function (tab) {
-        if(tab.url.indexOf("chrome://")>=0)return ;
-        addClick(tab.url);
     });
-});
 
-chrome.runtime.onMessage.addListener(function (message,sender,sendResponse) {
-    if(message.type == 'GET'){
-        sendResponse(param);
-    }else if(message.type == 'SET'){
-        var name = message.name;
-        var value = message.value;
-        var save = {};
-        save[name] = value;
-        param[name] = value;
-        console.log(param);
-        chrome.storage.local.set(save);
-    }
+    chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+        console.log('Tab '+tabId+' has been changed with these options:');
+        console.log(changeInfo);
+        console.log(tab);
+    });
 
-});
+    chrome.tabs.onMoved.addListener(function(tabId, moveInfo){
+        //console.log(moveInfo);
+    });
+
+    chrome.tabs.onActivated.addListener(function(activeInfo){
+        console.log('Tab '+activeInfo.tabId+' in window '+activeInfo.windowId+' is active now.');
+    });
+
+    chrome.runtime.onMessage.addListener(function (message,sender,sendResponse) {
+        switch(message.type)
+        {
+            case TYPE_ADD:
+                addClick(sender.tab.url);
+                break;
+            case TYPE_GET:
+                sendResponse(param);
+                break;
+            case TYPE_SET:
+                var name = message.name;
+                var value = message.value;
+                var save = {};
+                save[name] = value;
+                param[name] = value;
+                chrome.storage.local.set(save);
+                break;
+            default:
+                console.log('exception message:'+str(message));
+        }
+
+    });
+}
+
+(function () {
+    startListeners();
+    mainLoop();
+})();
