@@ -9,6 +9,8 @@ var TYPE_GET = 'GET';
 var TYPE_SET = 'SET';
 var TYPE_ADD = 'ADD';
 var TYPE_INIT = 'INIT';
+var PRE_TO_DELETE = -1;
+var MAYBE_INIT = 0;
 
 var urlInfo = [];
 var tabToUrl = [];
@@ -96,7 +98,12 @@ function adjustTabs(tabs) {
     for(var i in tabs){
         var tab = tabs[i];
         if(isBlankUrl(tab.url))continue;
-        if(getUrlWeight(tab.url) < param[THD_REMOVE]){
+        var weight = getUrlWeight(tab.url);
+        if(weight == MAYBE_INIT){
+            setUrlWeight(tab.url,param[INIT_WEIGHT]);
+            continue;
+        }
+        if(weight == PRE_TO_DELETE){
             tabsForDel.push(tab.id);
             continue;
         }
@@ -151,9 +158,13 @@ function mainLoop() {
     for(var url in urlInfo){
         var weight = getUrlWeight(url);
         if(weight < param[THD_REMOVE]){
-            delete urlInfo[url];
+            if(weight == PRE_TO_DELETE){
+                delete urlInfo[url];
+            }else{
+                setUrlWeight(url, PRE_TO_DELETE);
+            }
         }else {
-            setUrlWeight(url,getUrlWeight(url) * param[FALLOFF]);
+            setUrlWeight(url,weight * param[FALLOFF]);
         }
     }
 
@@ -203,28 +214,13 @@ function startListeners() {
     chrome.tabs.onCreated.addListener(function(tab){
         console.log(tab);
     });
-    //
-    // chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-    //     console.log('Tab '+tabId+' has been changed with these options:');
-    //     console.log(changeInfo);
-    //     var url = changeInfo.url;
-    //     if(!!url){
-    //         url = getUrl(url);
-    //         var oldUrl = tabToUrl[tabId];
-    //         var urlWeight = getUrlWeight(url);
-    //         var oldWeight = getUrlWeight(oldUrl);
-    //         if(!!urlWeight) {
-    //             setUrlWeight(url,Math.max(param[INIT_WEIGHT],urlWeight));
-    //         }else{
-    //             if(!!oldWeight && getDomain(url) == getDomain(oldUrl)){
-    //                 setUrlWeight(url,Math.max(param[INIT_WEIGHT], oldWeight));
-    //             }else{
-    //                 setUrlWeight(url,param[INIT_WEIGHT]);
-    //             }
-    //         }
-    //         tabToUrl[tabId] = url;
-    //     }
-    // });
+
+    chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+        console.log('Tab '+tabId+' has been changed with these options:');
+        console.log(changeInfo);
+        var url = changeInfo.url;
+        updateTab(tabId, url);
+    });
 
     chrome.tabs.onMoved.addListener(function(tabId, moveInfo){
         //console.log(moveInfo);
@@ -250,9 +246,6 @@ function startListeners() {
                 save[name] = value;
                 param[name] = value;
                 chrome.storage.local.set(save);
-                break;
-            case TYPE_INIT:
-                updateTab(sender.tab.id,sender.tab.url);
                 break;
             default:
                 console.log('exception message:');

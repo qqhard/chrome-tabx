@@ -20,8 +20,6 @@ function sendMessage(type) {
     chrome.runtime.sendMessage(message);
 }
 
-sendMessage(TYPE_INIT);
-
 function updateTime() {
     var nowOperateTime = getNowTime();
     if(nowOperateTime - lastOperateTime < MAX_ROUND){
