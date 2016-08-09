@@ -8,6 +8,7 @@ var ADD_WEIGHT = 'addweight';
 var TYPE_GET = 'GET';
 var TYPE_SET = 'SET';
 var TYPE_ADD = 'ADD';
+var TYPE_INIT = 'INIT';
 
 var urlInfo = [];
 var tabToUrl = [];
@@ -178,33 +179,52 @@ function mainLoop() {
     setTimeout(mainLoop,param[ROUND]*1000);
 }
 
+function updateTab(tabId, url) {
+    if(!!url){
+        url = getUrl(url);
+        var oldUrl = tabToUrl[tabId];
+        var urlWeight = getUrlWeight(url);
+        var oldWeight = getUrlWeight(oldUrl);
+        if(!!urlWeight) {
+            setUrlWeight(url,Math.max(param[INIT_WEIGHT],urlWeight));
+        }else{
+            if(!!oldWeight && getDomain(url) == getDomain(oldUrl)){
+                setUrlWeight(url,Math.max(param[INIT_WEIGHT], oldWeight));
+            }else{
+                setUrlWeight(url,param[INIT_WEIGHT]);
+            }
+        }
+        tabToUrl[tabId] = url;
+    }
+}
+
 
 function startListeners() {
     chrome.tabs.onCreated.addListener(function(tab){
         console.log(tab);
     });
-
-    chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-        console.log('Tab '+tabId+' has been changed with these options:');
-        console.log(changeInfo);
-        var url = changeInfo.url;
-        if(!!url){
-            url = getUrl(url);
-            var oldUrl = tabToUrl[tabId];
-            var urlWeight = getUrlWeight(url);
-            var oldWeight = getUrlWeight(oldUrl);
-            if(!!urlWeight) {
-                setUrlWeight(url,Math.max(param[INIT_WEIGHT],urlWeight));
-            }else{
-                if(!!oldWeight && getDomain(url) == getDomain(oldUrl)){
-                    setUrlWeight(url,Math.max(param[INIT_WEIGHT], oldWeight));
-                }else{
-                    setUrlWeight(url,param[INIT_WEIGHT]);
-                }
-            }
-            tabToUrl[tabId] = url;
-        }
-    });
+    //
+    // chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+    //     console.log('Tab '+tabId+' has been changed with these options:');
+    //     console.log(changeInfo);
+    //     var url = changeInfo.url;
+    //     if(!!url){
+    //         url = getUrl(url);
+    //         var oldUrl = tabToUrl[tabId];
+    //         var urlWeight = getUrlWeight(url);
+    //         var oldWeight = getUrlWeight(oldUrl);
+    //         if(!!urlWeight) {
+    //             setUrlWeight(url,Math.max(param[INIT_WEIGHT],urlWeight));
+    //         }else{
+    //             if(!!oldWeight && getDomain(url) == getDomain(oldUrl)){
+    //                 setUrlWeight(url,Math.max(param[INIT_WEIGHT], oldWeight));
+    //             }else{
+    //                 setUrlWeight(url,param[INIT_WEIGHT]);
+    //             }
+    //         }
+    //         tabToUrl[tabId] = url;
+    //     }
+    // });
 
     chrome.tabs.onMoved.addListener(function(tabId, moveInfo){
         //console.log(moveInfo);
@@ -231,8 +251,12 @@ function startListeners() {
                 param[name] = value;
                 chrome.storage.local.set(save);
                 break;
+            case TYPE_INIT:
+                updateTab(sender.tab.id,sender.tab.url);
+                break;
             default:
-                console.log('exception message:'+str(message));
+                console.log('exception message:');
+                console.log(message);
         }
 
     });
