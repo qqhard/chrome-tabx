@@ -1,6 +1,6 @@
 {
-  "name": "MyTaskList",
-  "version": "0.9.0",
+  "name": "TabX",
+  "version": "0.0.2",
   "manifest_version": 2,
   "description": "Management my everyday's task lists.",
   "background": {
@@ -8,7 +8,7 @@
   },
   "browser_action": {
     "default_icon": "icon.png" ,
-    "default_title": "My Task List",
+    "default_title": "TabX",
     "default_popup": "popup.html"
   },
   "content_scripts": [

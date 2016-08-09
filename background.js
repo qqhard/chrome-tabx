@@ -91,9 +91,14 @@ function cmpstr(a,b) {
 function adjustTabs(tabs) {
     var arrs = [];
     var domainScore = [];
+    var tabsForDel = [];
     for(var i in tabs){
         var tab = tabs[i];
         if(isBlankUrl(tab.url))continue;
+        if(getUrlWeight(tab.url) < param[THD_REMOVE]){
+            tabsForDel.push(tab.id);
+            continue;
+        }
         var node = {
             oldIndex: tab.index,
             tabId: tab.id,
@@ -109,6 +114,10 @@ function adjustTabs(tabs) {
         }
         arrs.push(node);
     }
+    if(param[IS_REMOVE]){
+        chrome.tabs.remove(tabsForDel);
+    }
+
     for(var i in arrs){
         var ds = domainScore[arrs[i].domain];
         arrs[i].domainScore = ds.weight / ds.count;
@@ -140,22 +149,21 @@ function mainLoop() {
     }
     for(var url in urlInfo){
         var weight = getUrlWeight(url);
-        setUrlWeight(url,getUrlWeight(url) * param[FALLOFF]);
+        if(weight < param[THD_REMOVE]){
+            delete urlInfo[url];
+        }else {
+            setUrlWeight(url,getUrlWeight(url) * param[FALLOFF]);
+        }
     }
 
-    var tabsForDel = [];
     for(var tabId in tabToUrl){
         var url = tabToUrl[tabId];
         var weight = getUrlWeight(url);
         if(weight < param[THD_REMOVE]){
-            delete urlInfo[url];
             delete tabToUrl[tabId];
-            tabsForDel.push(parseInt(tabId));
         }
     }
-    if(param[IS_REMOVE]){
-        chrome.tabs.remove(tabsForDel);
-    }
+
 
     setTimeout(function () {
         chrome.windows.getCurrent({populate:true},function (window) {
