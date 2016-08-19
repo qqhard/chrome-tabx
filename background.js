@@ -9,11 +9,14 @@ var TYPE_GET = 'GET';
 var TYPE_SET = 'SET';
 var TYPE_ADD = 'ADD';
 var TYPE_INIT = 'INIT';
+var TYPE_CLOSEURL = "CLOSEURL";
 var PRE_TO_DELETE = -1;
 var MAYBE_INIT = 0;
 
 var urlInfo = [];
 var tabToUrl = [];
+var closeUrl = [];
+
 var param = {
     isstart: true,
     isremove: true,
@@ -66,6 +69,9 @@ function getUrl(url) {
     return re.exec(url+"#")[1];
 }
 
+function getTitle(url) {
+    
+}
 function isBlankUrl(url) {
     if(!url || url.indexOf("chrome://")>=0) return true;
     return false;
@@ -159,7 +165,8 @@ function mainLoop() {
         var weight = getUrlWeight(url);
         if(weight < param[THD_REMOVE]){
             if(weight == PRE_TO_DELETE){
-                delete urlInfo[url];
+                closeUrl.push(url);
+                delete urlInfo[url]; 
             }else{
                 setUrlWeight(url, PRE_TO_DELETE);
             }
@@ -246,6 +253,9 @@ function startListeners() {
                 save[name] = value;
                 param[name] = value;
                 chrome.storage.local.set(save);
+                break;
+            case TYPE_CLOSEURL:
+                sendResponse(closeUrl);
                 break;
             default:
                 console.log('exception message:');

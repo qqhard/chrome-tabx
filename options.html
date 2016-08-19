@@ -1,0 +1,68 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" type="text/css" href="lib/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="index.css">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 520px;
+    height: 270px;
+}
+
+table {
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+    font-size: 12px;
+    width: 480px;
+    text-align: left;
+    border-collapse: collapse;
+    border: 1px solid #69c;
+    margin: 20px;
+    cursor: default;
+
+}
+
+table th {
+    font-weight: normal;
+    font-size: 14px;
+    color: #039;
+    border-bottom: 1px dashed #69c;
+    padding: 12px 17px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+table td {
+    color: #669;
+    padding: 7px 17px;
+    white-space: nowrap;
+}
+
+table tbody tr:hover td {
+    color: #339;
+    background: #d0dafd;
+}
+
+</style>
+</head>
+<body>
+<div>
+    <table border="1" align="center" id = "opentabtable">
+        <tr>
+            <th>choose</th>
+            <th>已关闭页面</th>
+        </tr>
+    </table>
+</div>
+<div style="margin:0 auto; width: 300px;">
+    <button type="button" id = "open" onclick = "openurl()">打开</button>
+</div>
+<script src="opentab.js"></script>
+</body>
+</html>
+
+
