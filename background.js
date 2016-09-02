@@ -101,6 +101,7 @@ function adjustTabs(tabs) {
     var arrs = [];
     var domainScore = [];
     var tabsForDel = [];
+    var tabNum = tabs.length;
     for(var i in tabs){
         var tab = tabs[i];
         if(isBlankUrl(tab.url))continue;
@@ -109,8 +110,11 @@ function adjustTabs(tabs) {
             setUrlWeight(tab.url,param[INIT_WEIGHT]);
             continue;
         }
-        if(weight == PRE_TO_DELETE){
+        if(weight == PRE_TO_DELETE && tabNum > 7){
             tabsForDel.push(tab.id);
+            closeUrl.push(tab.url);
+            delete urlInfo[tab.url];
+            tabNum--;
             continue;
         }
         var node = {
@@ -165,8 +169,8 @@ function mainLoop() {
         var weight = getUrlWeight(url);
         if(weight < param[THD_REMOVE]){
             if(weight == PRE_TO_DELETE){
-                closeUrl.push(url);
-                delete urlInfo[url]; 
+
+
             }else{
                 setUrlWeight(url, PRE_TO_DELETE);
             }
